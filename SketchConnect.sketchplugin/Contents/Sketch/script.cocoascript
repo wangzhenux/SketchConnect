@@ -5,7 +5,6 @@ var lineColorInput;
 var groupCheckbox;
 var groupCheckboxInput;
 var layers = [];
-var isParentGroup = false;
 var group = [[MSLayerGroup alloc] init];
 [group setName: "Line-group"];
 
@@ -16,179 +15,158 @@ function initVars(context) {
 }
 
 var onRun = function(context) {
-    context.document.hideMessage();
+  context.document.hideMessage();
 
-    var document = context.document;
-    var selectedLayers = context.selection;
-    var firstLayer = selectedLayers[0];
-    var parent = [firstLayer parentGroup];
+  var document = context.document;
+  var selectedLayers = context.selection;
+  var firstLayer = selectedLayers[0];
+  var parent = [firstLayer parentGroup];
 
-    if (parent.class() != "MSPage") {
-      var board = document.currentPage().currentArtboard();
-    } else {
-      var board = document.currentPage();
+  var selectedCount = selectedLayers.count();
+  if (selectedCount < 2) {
+    context.document.showMessage('At least two items must be selected.');
+    return;
+  }
+
+  // Create window
+  var window = createWindow(context);
+  var alert = window[0];
+
+  var response = alert.runModal();
+
+  if (response != "1000") {
+    return;
+  }
+
+  // Get line information
+  lineThicknessInput = lineThickness.stringValue();
+  lineColorInput = lineColor.stringValue();
+  groupCheckboxInput = groupCheckbox.stringValue();
+
+  if (groupCheckboxInput == 1) {
+    for (var i = 0; i < selectedCount; i++) {
+      var a = selectedLayers[i];
+      var aFrame = a.frame();
+      var aMidX = aFrame.x() + aFrame.width() * 0.5;
+      var aMidY = aFrame.y() + aFrame.height() * 0.5;
+      for (var j = i + 1; j < selectedCount; j++) {
+        var b = selectedLayers[j];
+        var bFrame = b.frame();
+        var bMidX = bFrame.x() + bFrame.width() * 0.5;
+        var bMidY = bFrame.y() + bFrame.height() * 0.5;
+        var line = drawLine(context, aMidX, aMidY, bMidX, bMidY, lineThicknessInput, lineColorInput);
+        [group addLayers: line];
+      }
     }
+    [group resizeToFitChildrenWithOption: 1];
+    parent.addLayers([group]);
 
-    if (parent.class() == "MSLayerGroup") {
-      var isParentGroup = true;
+    MSLayerMovement.moveToBack([group]);
+  } else {
+    for (var i = 0; i < selectedCount; i++) {
+      var a = selectedLayers[i];
+      var aFrame = a.frame();
+      var aMidX = aFrame.x() + aFrame.width() * 0.5;
+      var aMidY = aFrame.y() + aFrame.height() * 0.5;
+      for (var j = i + 1; j < selectedCount; j++) {
+        var b = selectedLayers[j];
+        var bFrame = b.frame();
+        var bMidX = bFrame.x() + bFrame.width() * 0.5;
+        var bMidY = bFrame.y() + bFrame.height() * 0.5;
+        var line = drawLine(context, aMidX, aMidY, bMidX, bMidY, lineThicknessInput, lineColorInput);
+        [parent addLayers: line];
+        MSLayerMovement.moveToBack(line);
+      }
     }
-
-    var selectedCount = selectedLayers.count();
-    if (selectedCount < 2) {
-        context.document.showMessage('At least two items must be selected.');
-        return;
-    }
-
-    // Create window
-    var window = createWindow(context);
-    var alert = window[0];
-
-    var response = alert.runModal();
-
-    if(response != "1000") {
-        return;
-    }
-
-    // Get line information
-   lineThicknessInput = lineThickness.stringValue();
-   lineColorInput = lineColor.stringValue();
-   groupCheckboxInput = groupCheckbox.stringValue();
-
-   if(groupCheckboxInput == 1) {
-     for (var i = 0; i < selectedCount; i++) {
-         var a = selectedLayers[i];
-         var aFrame = a.frame();
-         var aMidX = aFrame.x() + aFrame.width() * 0.5;
-         var aMidY = aFrame.y() + aFrame.height() * 0.5;
-         for(var j = i + 1; j < selectedCount; j++) {
-             var b = selectedLayers[j];
-             var bFrame = b.frame();
-             var bMidX = bFrame.x() + bFrame.width() * 0.5;
-             var bMidY = bFrame.y() + bFrame.height() * 0.5;
-             var line = drawLine(context, aMidX, aMidY, bMidX, bMidY, lineThicknessInput, lineColorInput);
-             [group addLayers: line];
-         }
-     }
-     [group resizeToFitChildrenWithOption:1];
-
-     if(isParentGroup) {
-        parent.addLayers([group]);
-     } else {
-        board.addLayers([group]);
-     }
-
-     MSLayerMovement.moveToBack([group]);
-   } else {
-     for (var i = 0; i < selectedCount; i++) {
-         var a = selectedLayers[i];
-         var aFrame = a.frame();
-         var aMidX = aFrame.x() + aFrame.width() * 0.5;
-         var aMidY = aFrame.y() + aFrame.height() * 0.5;
-         for(var j = i + 1; j < selectedCount; j++) {
-             var b = selectedLayers[j];
-             var bFrame = b.frame();
-             var bMidX = bFrame.x() + bFrame.width() * 0.5;
-             var bMidY = bFrame.y() + bFrame.height() * 0.5;
-             if (isParentGroup) {
-                var line = drawLine(context, aMidX, aMidY, bMidX, bMidY, lineThicknessInput, lineColorInput);
-                [parent addLayers: line];
-                MSLayerMovement.moveToBack(line);
-             } else {
-               var line = drawLine(context, aMidX, aMidY, bMidX, bMidY, lineThicknessInput, lineColorInput);
-               board.addLayers(line);
-               MSLayerMovement.moveToBack(line);
-             }
-         }
-     }
-   }
+  }
 
   context.document.showMessage("Successfully Connected!");
 };
 
 function drawLine(context, x1, y1, x2, y2, thickness, color) {
 
-    if(!thickness || !color) {
-        // Use default settings
-        thickness = 1;
-        color = "#767676";
-    }
+  if (!thickness || !color) {
+    // Use default settings
+    thickness = 1;
+    color = "#767676";
+  }
 
-    var document = context.document;
-    var path = NSBezierPath.bezierPath();
+  var document = context.document;
+  var path = NSBezierPath.bezierPath();
 
-    path.moveToPoint(NSMakePoint(x1, y1));
-    path.lineToPoint(NSMakePoint(x2, y2));
+  path.moveToPoint(NSMakePoint(x1, y1));
+  path.lineToPoint(NSMakePoint(x2, y2));
 
-    var line = MSShapeGroup.shapeWithBezierPath(path);
-    [line setName: "path"];
+  var line = MSShapeGroup.shapeWithBezierPath(path);
+  [line setName: "path"];
 
-    var newBorder = line.style().addStylePartOfType(1);
-    newBorder.color = MSImmutableColor.colorWithSVGString(color);
-    newBorder.thickness = thickness;
+  var newBorder = line.style().addStylePartOfType(1);
+  newBorder.color = MSImmutableColor.colorWithSVGString(color);
+  newBorder.thickness = thickness;
 
-    return [line];
+  return [line];
 };
 
 function createWindow(context) {
-    initVars(context);
+  initVars(context);
 
-    var alert = COSAlertWindow.new();
-    alert.setMessageText("Configure Connecting Objects")
-    // Creating dialog buttons
-    alert.addButtonWithTitle("Draw");
-    alert.addButtonWithTitle("Cancel");
+  var alert = COSAlertWindow.new();
+  alert.setMessageText("Configure Connecting Objects")
+  // Creating dialog buttons
+  alert.addButtonWithTitle("Draw");
+  alert.addButtonWithTitle("Cancel");
 
-    // Creating the view
-    var viewWidth = 300;
-    var viewHeight = 70;
+  // Creating the view
+  var viewWidth = 300;
+  var viewHeight = 70;
 
-    var view = NSView.alloc().initWithFrame(NSMakeRect(0, 0, viewWidth, viewHeight));
+  var view = NSView.alloc().initWithFrame(NSMakeRect(0, 0, viewWidth, viewHeight));
 
-    // Creating the inputs
-    lineThickness = NSTextField.alloc().initWithFrame(NSMakeRect(0, viewHeight - 40, 130, 20));
-    lineColor = NSTextField.alloc().initWithFrame(NSMakeRect(140, viewHeight - 40, 130, 20));
+  // Creating the inputs
+  lineThickness = NSTextField.alloc().initWithFrame(NSMakeRect(0, viewHeight - 40, 130, 20));
+  lineColor = NSTextField.alloc().initWithFrame(NSMakeRect(140, viewHeight - 40, 130, 20));
 
-    var lineThicknessLabel = NSTextField.alloc().initWithFrame(NSMakeRect(-1, viewHeight - 20, (viewWidth / 2) - 10, 20));
-    var lineColorLabel = NSTextField.alloc().initWithFrame(NSMakeRect(140, viewHeight - 20, (viewWidth / 2) - 10, 20));
+  var lineThicknessLabel = NSTextField.alloc().initWithFrame(NSMakeRect(-1, viewHeight - 20, (viewWidth / 2) - 10, 20));
+  var lineColorLabel = NSTextField.alloc().initWithFrame(NSMakeRect(140, viewHeight - 20, (viewWidth / 2) - 10, 20));
 
-    groupCheckbox = NSButton.alloc().initWithFrame(NSMakeRect(-1, viewHeight - 70, viewWidth - 10, 20));
+  groupCheckbox = NSButton.alloc().initWithFrame(NSMakeRect(-1, viewHeight - 70, viewWidth - 10, 20));
 
-    groupCheckbox.setButtonType(NSSwitchButton);
-    groupCheckbox.setBezelStyle(0);
-    groupCheckbox.setTitle("Group all generated lines.");
-    groupCheckbox.setState(NSOffState);
+  groupCheckbox.setButtonType(NSSwitchButton);
+  groupCheckbox.setBezelStyle(0);
+  groupCheckbox.setTitle("Group all generated lines.");
+  groupCheckbox.setState(NSOffState);
 
-    [lineThickness setNextKeyView:lineColor];
+  [lineThickness setNextKeyView: lineColor];
 
-    lineThicknessLabel.setStringValue("Line Thickness:");
-    lineThicknessLabel.setSelectable(false);
-    lineThicknessLabel.setEditable(false);
-    lineThicknessLabel.setBezeled(false);
-    lineThicknessLabel.setDrawsBackground(false);
+  lineThicknessLabel.setStringValue("Line Thickness:");
+  lineThicknessLabel.setSelectable(false);
+  lineThicknessLabel.setEditable(false);
+  lineThicknessLabel.setBezeled(false);
+  lineThicknessLabel.setDrawsBackground(false);
 
-    lineColorLabel.setStringValue("Line Color:");
-    lineColorLabel.setSelectable(false);
-    lineColorLabel.setEditable(false);
-    lineColorLabel.setBezeled(false);
-    lineColorLabel.setDrawsBackground(false);
+  lineColorLabel.setStringValue("Line Color:");
+  lineColorLabel.setSelectable(false);
+  lineColorLabel.setEditable(false);
+  lineColorLabel.setBezeled(false);
+  lineColorLabel.setDrawsBackground(false);
 
-    // Default values for textfield
-    lineThickness.setStringValue('1');
-    lineColor.setStringValue('#767676');
+  // Default values for textfield
+  lineThickness.setStringValue('1');
+  lineColor.setStringValue('#767676');
 
-    // Adding the textfield
-    view.addSubview(lineThickness);
-    view.addSubview(lineColor);
+  // Adding the textfield
+  view.addSubview(lineThickness);
+  view.addSubview(lineColor);
 
-    // Adding the label
-    view.addSubview(lineColorLabel);
-    view.addSubview(lineThicknessLabel);
+  // Adding the label
+  view.addSubview(lineColorLabel);
+  view.addSubview(lineThicknessLabel);
 
-    // Add checkboxes
-    view.addSubview(groupCheckbox);
+  // Add checkboxes
+  view.addSubview(groupCheckbox);
 
-    alert.addAccessoryView(view);
+  alert.addAccessoryView(view);
 
-    // Show the dialog
-    return [alert];
+  // Show the dialog
+  return [alert];
 }
