@@ -1,0 +1,23 @@
+{
+  "author" : "Zhen Wang",
+  "commands" : [
+    {
+      "script" : "script.cocoascript",
+      "handler" : "onRun",
+      "shortcut" : "command l",
+      "name" : "Sketch Connect",
+      "identifier" : "sketch-connect"
+    }
+  ],
+  "menu" : {
+    "items" : [
+      "sketch-connect"
+    ],
+    "title" : "Sketch Connect"
+  },
+  "identifier" : "com.example.sketch.bed6e976-ac06-456f-9b14-43611ac133cf",
+  "version" : "1.0",
+  "description" : "Connecting Objects with Straight Lines",
+  "authorEmail" : "wangzhen614@gmail.com",
+  "name" : "SketchConnect"
+}
