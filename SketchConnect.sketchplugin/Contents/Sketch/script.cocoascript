@@ -86,7 +86,7 @@ var onRun = function(context) {
      }
    }
 
-  //context.document.showMessage("Successfully Connected!");
+  context.document.showMessage("Successfully Connected!");
 };
 
 function drawLine(context, x1, y1, x2, y2, thickness, color) {
