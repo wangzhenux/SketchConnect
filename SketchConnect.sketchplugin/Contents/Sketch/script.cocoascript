@@ -5,6 +5,7 @@ var lineColorInput;
 var groupCheckbox;
 var groupCheckboxInput;
 var layers = [];
+var isParentGroup = false;
 var group = [[MSLayerGroup alloc] init];
 [group setName: "Line-group"];
 
@@ -26,6 +27,10 @@ var onRun = function(context) {
       var board = document.currentPage().currentArtboard();
     } else {
       var board = document.currentPage();
+    }
+
+    if (parent.class() == "MSLayerGroup") {
+      var isParentGroup = true;
     }
 
     var selectedCount = selectedLayers.count();
@@ -65,9 +70,14 @@ var onRun = function(context) {
          }
      }
      [group resizeToFitChildrenWithOption:1];
-     board.addLayers([group]);
-     MSLayerMovement.moveToBack([group]);
 
+     if(isParentGroup) {
+        parent.addLayers([group]);
+     } else {
+        board.addLayers([group]);
+     }
+
+     MSLayerMovement.moveToBack([group]);
    } else {
      for (var i = 0; i < selectedCount; i++) {
          var a = selectedLayers[i];
@@ -79,9 +89,15 @@ var onRun = function(context) {
              var bFrame = b.frame();
              var bMidX = bFrame.x() + bFrame.width() * 0.5;
              var bMidY = bFrame.y() + bFrame.height() * 0.5;
-             var line = drawLine(context, aMidX, aMidY, bMidX, bMidY, lineThicknessInput, lineColorInput);
-             board.addLayers(line);
-             MSLayerMovement.moveToBack(line);
+             if (isParentGroup) {
+                var line = drawLine(context, aMidX, aMidY, bMidX, bMidY, lineThicknessInput, lineColorInput);
+                [parent addLayers: line];
+                MSLayerMovement.moveToBack(line);
+             } else {
+               var line = drawLine(context, aMidX, aMidY, bMidX, bMidY, lineThicknessInput, lineColorInput);
+               board.addLayers(line);
+               MSLayerMovement.moveToBack(line);
+             }
          }
      }
    }
@@ -92,7 +108,9 @@ var onRun = function(context) {
 function drawLine(context, x1, y1, x2, y2, thickness, color) {
 
     if(!thickness || !color) {
-        return; //#767676
+        // Use default settings
+        thickness = 1;
+        color = "#767676";
     }
 
     var document = context.document;
