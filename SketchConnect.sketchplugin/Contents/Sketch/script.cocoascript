@@ -6,7 +6,9 @@ var groupCheckbox;
 var groupCheckboxInput;
 var layers = [];
 var group = [[MSLayerGroup alloc] init];
+var nodeGroup = [[MSLayerGroup alloc] init];
 [group setName: "Line-group"];
+[nodeGroup setName: "Network-group"];
 
 function initVars(context) {
   doc = context.document;
@@ -19,10 +21,23 @@ var onRun = function(context) {
 
   var document = context.document;
   var selectedLayers = context.selection;
+  var selectedCount = selectedLayers.count();
+
   var firstLayer = selectedLayers[0];
   var parent = [firstLayer parentGroup];
 
-  var selectedCount = selectedLayers.count();
+  if(parent.class() != 'MSLayerGroup') {
+    parent.addLayers([nodeGroup]);
+
+    for (var i=0; i < [selectedLayers count]; i++) {
+        var currentLayer = [selectedLayers objectAtIndex:i];
+        parent.removeLayer(currentLayer);
+    }
+    nodeGroup.addLayers(selectedLayers);
+    nodeGroup.resizeToFitChildrenWithOption(1);
+    parent = nodeGroup;
+  }
+
   if (selectedCount < 2) {
     context.document.showMessage('At least two items must be selected.');
     return;
