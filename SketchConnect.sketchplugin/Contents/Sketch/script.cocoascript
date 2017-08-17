@@ -8,7 +8,7 @@ var layers = [];
 var group = [[MSLayerGroup alloc] init];
 var nodeGroup = [[MSLayerGroup alloc] init];
 [group setName: "Line-group"];
-[nodeGroup setName: "Network-group"];
+[nodeGroup setName: "Node-group"];
 
 function initVars(context) {
   doc = context.document;
@@ -22,21 +22,6 @@ var onRun = function(context) {
   var document = context.document;
   var selectedLayers = context.selection;
   var selectedCount = selectedLayers.count();
-
-  var firstLayer = selectedLayers[0];
-  var parent = [firstLayer parentGroup];
-
-  if(parent.class() != 'MSLayerGroup') {
-    parent.addLayers([nodeGroup]);
-
-    for (var i=0; i < [selectedLayers count]; i++) {
-        var currentLayer = [selectedLayers objectAtIndex:i];
-        parent.removeLayer(currentLayer);
-    }
-    nodeGroup.addLayers(selectedLayers);
-    nodeGroup.resizeToFitChildrenWithOption(1);
-    parent = nodeGroup;
-  }
 
   if (selectedCount < 2) {
     context.document.showMessage('At least two items must be selected.');
@@ -58,6 +43,21 @@ var onRun = function(context) {
   lineColorInput = lineColor.stringValue();
   groupCheckboxInput = groupCheckbox.stringValue();
 
+  var firstLayer = selectedLayers[0];
+  var parent = [firstLayer parentGroup];
+
+  if(parent.class() != 'MSLayerGroup') {
+    parent.addLayers([nodeGroup]);
+
+    for (var i=0; i < [selectedLayers count]; i++) {
+        var currentLayer = [selectedLayers objectAtIndex:i];
+        parent.removeLayer(currentLayer);
+    }
+    nodeGroup.addLayers(selectedLayers);
+    nodeGroup.resizeToFitChildrenWithOption(1);
+    parent = nodeGroup;
+  }
+
   if (groupCheckboxInput == 1) {
     for (var i = 0; i < selectedCount; i++) {
       var a = selectedLayers[i];
@@ -69,7 +69,7 @@ var onRun = function(context) {
         var bFrame = b.frame();
         var bMidX = bFrame.x() + bFrame.width() * 0.5;
         var bMidY = bFrame.y() + bFrame.height() * 0.5;
-        var line = drawLine(context, aMidX, aMidY, bMidX, bMidY, lineThicknessInput, lineColorInput);
+        var line = drawLine(context, aMidX, aMidY, bMidX, bMidY, lineThicknessInput, lineColorInput, a.name(), b.name());
         [group addLayers: line];
       }
     }
@@ -88,7 +88,7 @@ var onRun = function(context) {
         var bFrame = b.frame();
         var bMidX = bFrame.x() + bFrame.width() * 0.5;
         var bMidY = bFrame.y() + bFrame.height() * 0.5;
-        var line = drawLine(context, aMidX, aMidY, bMidX, bMidY, lineThicknessInput, lineColorInput);
+        var line = drawLine(context, aMidX, aMidY, bMidX, bMidY, lineThicknessInput, lineColorInput, a.name(), b.name());
         [parent addLayers: line];
         MSLayerMovement.moveToBack(line);
       }
@@ -98,7 +98,7 @@ var onRun = function(context) {
   context.document.showMessage("Successfully Connected!");
 };
 
-function drawLine(context, x1, y1, x2, y2, thickness, color) {
+function drawLine(context, x1, y1, x2, y2, thickness, color, aName, bName) {
 
   if (!thickness || !color) {
     // Use default settings
@@ -113,7 +113,7 @@ function drawLine(context, x1, y1, x2, y2, thickness, color) {
   path.lineToPoint(NSMakePoint(x2, y2));
 
   var line = MSShapeGroup.shapeWithBezierPath(path);
-  [line setName: "path"];
+  [line setName: aName + "-" + bName];
 
   var newBorder = line.style().addStylePartOfType(1);
   newBorder.color = MSImmutableColor.colorWithSVGString(color);
