@@ -1,0 +1,25 @@
+{
+  "compatibleVersion": 3,
+  "bundleVersion": 1,
+  "icon": "icon.png",
+  "commands": [
+    {
+      "name": "Sketcch Connect",
+      "identifier": "my-command-identifier",
+      "shortcut": "command l",
+      "script": "my-command.js"
+    }
+  ],
+  "menu": {
+    "title": "Sketch-Connect",
+    "items": [
+      "my-command-identifier"
+    ]
+  },
+  "version": "1.0",
+  "description": "Connecting Objects with Straight Lines",
+  "authorEmail": "wangzhen614@gmail.com",
+  "name": "SketchConnect",
+  "disableCocoaScriptPreprocessor": true,
+  "appcast": "https://raw.githubusercontent.com//master/.appcast.xml"
+}
