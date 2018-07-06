@@ -6,7 +6,7 @@
     {
       "name": "Sketcch Connect",
       "identifier": "my-command-identifier",
-      "shortcut": "command l",
+      "shortcut": "ctrl option command 4",
       "script": "my-command.js"
     }
   ],

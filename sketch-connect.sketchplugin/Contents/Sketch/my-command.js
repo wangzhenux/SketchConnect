@@ -109,8 +109,6 @@ var lineColorInput; // var groupCheckbox;
 /* harmony default export */ __webpack_exports__["default"] = (function (context) {
   var selectedLayers = context.selection;
   var selectedCount = selectedLayers.count();
-  console.log("selectedCount = " + selectedCount);
-  ;
 
   if (selectedCount < 2) {
     context.document.showMessage('At least 2 layers need to be selected.');
